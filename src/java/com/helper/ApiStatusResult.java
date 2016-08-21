@@ -11,7 +11,7 @@ import lombok.Setter;
 /**
  * Created by bhushan on 21/8/16.
  */
-@XmlRootElement(name = "result")
+@XmlRootElement
 @Getter
 @Setter
 @NoArgsConstructor

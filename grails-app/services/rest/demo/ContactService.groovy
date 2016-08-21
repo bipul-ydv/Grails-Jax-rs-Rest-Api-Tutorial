@@ -1,49 +1,56 @@
 package rest.demo
 
-import com.CustomException.DomainNotFoundException
+import com.exceptionhandler.CustomException
+import com.helper.ApiStatusResult
 import grails.transaction.Transactional
+
+import javax.ws.rs.core.Response
 
 @Transactional
 class ContactService {
 
-    public Contact readContact(long id) {
-       Contact contact = Contact.findById(id);
+    def readContact(long id) {
+        Contact contact = Contact.findById(id);
         if(!contact) {
-            throw new DomainNotFoundException("Contact Not Find By ID:"+id);
+            notFound("Invalid Contact ID: ${id}", Response.Status.BAD_REQUEST);
         }
         return contact
     }
 
-    public List<Contact> readAllContact() {
+    def readAllContact() {
         return Contact.getAll()
     }
 
-    public Contact create(Contact contact) {
+    def create(Contact contact) {
         contact.save(flush: true)
         return contact
     }
 
-    public Contact updateContact(Long id, String firstName, String lastName, String email, String phoneNumber) {
+    def updateContact(Long id, String firstName, String lastName, String email, String phoneNumber) {
         Contact contact = Contact.findById(id);
         if(!contact) {
-            throw new DomainNotFoundException("Contact Not Find By ID:"+id);
+            notFound("Invalid Contact ID: ${id}", Response.Status.BAD_REQUEST);
         }
         contact.firstName =firstName
         contact.lastName =lastName
         contact.email = email
         contact.phoneNumber = phoneNumber
         if(!contact.validate()) {
-            throw new Exception("Bad request")
+            throw new CustomException(contact.errors, Response.Status.BAD_REQUEST);
         }
         contact.save(false:true)
         return contact
     }
 
-    public void deleteContact(long id) {
+    def deleteContact(long id) {
         Contact contact = Contact.findById(id);
         if(!contact) {
-            throw new DomainNotFoundException("Invalid Contact ID:"+id);
+            notFound("Invalid Contact ID: ${id}", Response.Status.BAD_REQUEST);
         }
         contact.delete(flush: true)
+    }
+
+    private void notFound(String message, Response.Status status) {
+        throw new CustomException(new ApiStatusResult(false, message), Response.Status.BAD_REQUEST);
     }
 }

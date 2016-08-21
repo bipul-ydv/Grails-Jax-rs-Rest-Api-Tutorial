@@ -1,8 +1,10 @@
 package rest.demo
 
-import com.CustomException.DomainNotFoundException
-import com.helper.ApiStatusResult
-import grails.converters.JSON
+import com.exceptionhandler.CustomException
+
+import javax.ws.rs.core.Response
+
+import static org.grails.jaxrs.response.Responses.*
 
 import javax.ws.rs.Consumes
 import javax.ws.rs.DELETE
@@ -11,75 +13,53 @@ import javax.ws.rs.Path
 import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
 import javax.ws.rs.QueryParam
-import javax.ws.rs.core.MediaType
 
 @Path('/api/contact')
-@Consumes(MediaType.APPLICATION_JSON)
-@Produces(MediaType.APPLICATION_JSON)
+@Consumes(['application/xml', 'application/json'])
+@Produces(['application/xml', 'application/json'])
 class ContactRSResource {
     def contactService
 
     // create contact
     @Path('/create')
     @POST
-    JSON create(@QueryParam("firstName") String firstName,@QueryParam("phoneNumber") String phoneNumber,
-                      @QueryParam("lastName") String lastName , @QueryParam("email") String email ) {
-        Contact contact = new Contact(firstName: firstName,lastName:lastName,phoneNumber:phoneNumber,email:email);
-        // validate contact domain
-        if ( !contact.validate()) {
-            return  new ApiStatusResult(false, 'Bad Request') as JSON
+    Response create1(Contact contact) {
+        if (!contact.validate()) {
+            throw new CustomException(contact.errors.fieldErrors, Response.Status.BAD_REQUEST)
         }
-        contact = contactService.create(contact)
-        return [id:contact.getId() ] as JSON
+        ok contactService.create(contact)
     }
 
     // read contact by id
     @Path('/read/{id}')
     @POST
-    JSON read(@PathParam('id') long id) {
-        try {
-          Contact contact =  contactService.readContact(id)
-            return contact as JSON
-        } catch (DomainNotFoundException e) {
-            return new ApiStatusResult(false, e.getMessage()) as JSON
-        }
+    Response read(@PathParam('id') long id) {
+        ok contactService.readContact(id)
 
     }
 
     // read all contact
     @Path('/readAll')
     @POST
-    JSON readAll() {
-            List<Contact> contacts =  contactService.readAllContact()
-            return contacts as JSON
+    Response readAll() {
+        ok contactService.readAllContact()
     }
 
 
-    // update contact
+    // update contact using ******QueryParam*******
     @Path('/update')
     @POST
-    JSON update(@QueryParam("id") Long id,@QueryParam("firstName") String firstName,@QueryParam("phoneNumber") String phoneNumber,
-                       @QueryParam("lastName") String lastName , @QueryParam("email") String email ) {
-      try {
-          Contact contact = contactService.updateContact(id,firstName,lastName,phoneNumber,email)
-          return contact as JSON
-      } catch (DomainNotFoundException e)  {
-          return  new ApiStatusResult(false, e.getMessage()) as JSON
-        } catch (Exception e) {
-          return  new ApiStatusResult(false, e.getMessage()) as JSON
-      }
+    Response update(@QueryParam("id") Long id,@QueryParam("firstName") String firstName,@QueryParam("phoneNumber") String phoneNumber,
+                    @QueryParam("lastName") String lastName , @QueryParam("email") String email ) {
+        ok contactService.updateContact(id,firstName,lastName,phoneNumber,email)
     }
 
     // delete contact
     @Path('/delete/{id}')
     @DELETE
-    JSON delete(@PathParam('id') Long id) {
-        try {
-           contactService.deleteContact(id)
-            return new ApiStatusResult(true, 'successfully delete contact with id'+id) as JSON
-        } catch (DomainNotFoundException e) {
-            return new ApiStatusResult(false, e.getMessage()) as JSON
-        }
+    Response delete(@PathParam('id') Long id) {
+        contactService.deleteContact(id)
+        Response.status(Response.Status.OK)
     }
 
 }
